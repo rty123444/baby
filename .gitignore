@@ -1,0 +1,10 @@
+venv/
+results/*
+!results/.gitkeep
+data/*
+!data/.gitkeep
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+api_key.txt
