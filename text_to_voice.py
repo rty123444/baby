@@ -1,9 +1,8 @@
-import pyttsx3
+from gtts import gTTS
+from playsound import playsound
 
 def text_to_voice(text):
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+    tts = gTTS(text=text, lang='zh-tw')
+    tts.save("output.mp3")
+    playsound("output.mp3")
 
-# 使用方法：
-#text_to_voice("您想要轉換的文字")
