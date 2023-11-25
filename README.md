@@ -20,3 +20,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+**保存依賴至requirments.txt**
+```
+pip freeze > requirements.txt
+```
