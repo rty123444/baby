@@ -1,41 +1,43 @@
-import sounddevice as sd
-import numpy as np
-import speech_recognition as sr
-import wave
-import io
+from vosk import Model, KaldiRecognizer
+import os
+import pyaudio
 
-def record_audio(duration=5, sample_rate=44100):
-    print(f"Recording for {duration} seconds...")
-    recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
-    sd.wait()
-    return recording
+def initialize_model(model_path):
+    # 检查模型路径
+    if not os.path.exists(model_path):
+        print("Model not found at", model_path)
+        exit(1)
 
-def save_audio_to_wav(recording, sample_rate=44100):
-    wav_io = io.BytesIO()
-    with wave.open(wav_io, 'wb') as wav_file:
-        wav_file.setnchannels(1)
-        wav_file.setsampwidth(2)
-        wav_file.setframerate(sample_rate)
-        wav_file.writeframes(recording.tobytes())
-    wav_io.seek(0)
-    return wav_io
+    # 加载模型
+    return Model(model_path)
 
-def voice_to_text(duration=5):
-    recognizer = sr.Recognizer()
-    audio_data = record_audio(duration)
-    wav_audio = save_audio_to_wav(audio_data)
+def voice_to_text(recognizer):
+    # 使用 PyAudio 开始录音
+    p = pyaudio.PyAudio()
+    stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8000)
+    stream.start_stream()
 
-    with sr.AudioFile(wav_audio) as source:
-        audio = recognizer.record(source)
+    print("请开始说话...")
 
-    try:
-        text = recognizer.recognize_google(audio, language="zh-TW")
-        return text
-    except sr.UnknownValueError:
-        return "无法识别语音"
-    except sr.RequestError as e:
-        return f"无法从 Google Web Speech API 获取结果; {e}"
+    # 进行录音并识别
+    while True:
+        data = stream.read(4000)
+        if recognizer.AcceptWaveform(data):
+            result = recognizer.Result()
+            break
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    return result
 
 if __name__ == "__main__":
-    text = voice_to_text(duration=5)
-    print("您说的话是： " + text)
+    model_path = "./model/vosk-model-cn-0.22"
+    model = initialize_model(model_path)
+    recognizer = KaldiRecognizer(model, 16000)
+
+    # 示例：连续进行两次语音识别
+    for _ in range(2):  
+        result = voice_to_text(recognizer)
+        print("识别结果:", result)
